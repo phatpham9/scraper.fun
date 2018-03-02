@@ -97,6 +97,7 @@ class ScraperBuilder extends Component {
     this.changeSelector = this.changeSelector.bind(this);
     this.removeSelector = this.removeSelector.bind(this);
     this.submit = this.submit.bind(this);
+    this.prettifyJSON = this.prettifyJSON.bind(this);
   }
 
   changeType(type) {
@@ -176,6 +177,10 @@ class ScraperBuilder extends Component {
         inProgress: false,
       });
     });
+  }
+
+  prettifyJSON(jsonString) {
+    return JSON.stringify(JSON.parse(jsonString), null, 2);
   }
 
   render() {
@@ -301,7 +306,8 @@ class ScraperBuilder extends Component {
         {!!this.state.response && (
           <FormGroup className="response">
             <Label>Response</Label>
-            <code className="d-block">{this.state.type === 'single' ? this.state.response : JSON.stringify(JSON.parse(this.state.response), null, 2)}</code>
+            <CopyToClipboardButton className="btn-copy-to-cb float-right" value={this.state.type === 'single' ? this.state.response : this.prettifyJSON(this.state.response)} />
+            <code className="d-block">{this.state.type === 'single' ? this.state.response : this.prettifyJSON(this.state.response)}</code>
           </FormGroup>
         )}
       </div>
