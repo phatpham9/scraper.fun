@@ -180,7 +180,11 @@ class ScraperBuilder extends Component {
   }
 
   prettifyJSON(jsonString) {
-    return JSON.stringify(JSON.parse(jsonString), null, 2);
+    try {
+      return JSON.stringify(JSON.parse(jsonString), null, 2);
+    } catch (e) {
+      return jsonString;
+    }
   }
 
   render() {
