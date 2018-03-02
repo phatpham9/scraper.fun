@@ -62,6 +62,14 @@ const request = async url => {
   }
 }
 
+const prettifyJSON = jsonString => {
+  try {
+    return JSON.stringify(JSON.parse(jsonString), null, 2);
+  } catch (e) {
+    return jsonString;
+  }
+}
+
 class ScraperBuilder extends Component {
   constructor(props) {
     super(props);
@@ -97,7 +105,6 @@ class ScraperBuilder extends Component {
     this.changeSelector = this.changeSelector.bind(this);
     this.removeSelector = this.removeSelector.bind(this);
     this.submit = this.submit.bind(this);
-    this.prettifyJSON = this.prettifyJSON.bind(this);
   }
 
   changeType(type) {
@@ -177,14 +184,6 @@ class ScraperBuilder extends Component {
         inProgress: false,
       });
     });
-  }
-
-  prettifyJSON(jsonString) {
-    try {
-      return JSON.stringify(JSON.parse(jsonString), null, 2);
-    } catch (e) {
-      return jsonString;
-    }
   }
 
   render() {
@@ -310,8 +309,8 @@ class ScraperBuilder extends Component {
         {!!this.state.response && (
           <FormGroup className="response">
             <Label>Response</Label>
-            <CopyToClipboardButton className="btn-copy-to-cb float-right" value={this.state.type === 'single' ? this.state.response : this.prettifyJSON(this.state.response)} />
-            <code className="d-block">{this.state.type === 'single' ? this.state.response : this.prettifyJSON(this.state.response)}</code>
+            <CopyToClipboardButton className="btn-copy-to-cb float-right" value={this.state.type === 'single' ? this.state.response : prettifyJSON(this.state.response)} />
+            <code className="d-block">{this.state.type === 'single' ? this.state.response : prettifyJSON(this.state.response)}</code>
           </FormGroup>
         )}
       </div>
