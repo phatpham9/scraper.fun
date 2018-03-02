@@ -17,6 +17,23 @@ const PARAMS_MAP = {
   scope: 's-scope',
   limit: 's-limit',
 };
+const DEFAULT_TYPE = 'single';
+const DEFAULT_PARAMS = {
+  url: 'https://coinmarketcap.com',
+  selector: '#id-bitcoin .price',
+  scope: 'table#currencies tbody tr',
+  selectors: [{
+    key: 'name',
+    value: '.currency-name .currency-name-container',
+  }, {
+    key: 'price',
+    value: '.price',
+  }, {
+    key: '',
+    value: '',
+  }],
+  limit: 10,
+};
 
 const map = params => Object.keys(params).reduce((result, paramKey) => {
   if (paramKey === 'selectors') {
@@ -74,23 +91,7 @@ class ScraperBuilder extends Component {
   constructor(props) {
     super(props);
 
-    const type = 'single';
-    const params = {
-      url: 'https://coinmarketcap.com',
-      selector: '#id-bitcoin .price',
-      scope: 'table#currencies tbody tr',
-      selectors: [{
-        key: 'name',
-        value: '.currency-name .currency-name-container',
-      }, {
-        key: 'price',
-        value: '.price',
-      }, {
-        key: '',
-        value: '',
-      }],
-      limit: 10,
-    };
+    const { type = DEFAULT_TYPE, params = DEFAULT_PARAMS } = qs.parse(window.location.search, { ignoreQueryPrefix: true });
 
     this.state = {
       type,
@@ -105,6 +106,7 @@ class ScraperBuilder extends Component {
     this.changeSelector = this.changeSelector.bind(this);
     this.removeSelector = this.removeSelector.bind(this);
     this.submit = this.submit.bind(this);
+    this.changeURL = this.changeURL.bind(this);
   }
 
   changeType(type) {
@@ -182,8 +184,20 @@ class ScraperBuilder extends Component {
       this.setState({
         response,
         inProgress: false,
+      }, () => {
+        this.changeURL();
       });
     });
+  }
+
+  changeURL() {
+    const { type, params } = this.state;
+    const queryString = qs.stringify({
+      type,
+      params
+    }, { addQueryPrefix: true });
+
+    window.history.pushState('', '', `${window.location.origin}${queryString}`);
   }
 
   render() {
