@@ -13,9 +13,15 @@ const API_HOST = window.location.host;
 const BASE_PATH = '/scrape';
 const PARAMS_MAP = {
   url: 's-url',
-  selector: 's-selector',
   scope: 's-scope',
   limit: 's-limit',
+  selector: 's-selector',
+};
+const PARAMS_MAP_REVERSE = {
+  's-url': 'url',
+  's-scope': 'scope',
+  's-limit': 'limit',
+  's-selector': 'selector',
 };
 const DEFAULT_TYPE = 'single';
 const DEFAULT_PARAMS = {
@@ -28,11 +34,12 @@ const DEFAULT_PARAMS = {
   }, {
     key: 'price',
     value: '.price',
-  }, {
-    key: '',
-    value: '',
   }],
   limit: 10,
+};
+const NEW_SELECTOR = {
+  key: '',
+  value: '',
 };
 
 const map = params => Object.keys(params).reduce((result, paramKey) => {
@@ -91,7 +98,26 @@ class ScraperBuilder extends Component {
   constructor(props) {
     super(props);
 
-    const { type = DEFAULT_TYPE, params = DEFAULT_PARAMS } = qs.parse(window.location.search, { ignoreQueryPrefix: true });
+    const queryParams = qs.parse(window.location.search, { ignoreQueryPrefix: true });
+    const { url = DEFAULT_PARAMS.url, scope = DEFAULT_PARAMS.scope, limit = DEFAULT_PARAMS.limit, selector, ...selectors } = Object.keys(queryParams).reduce((res, key) => ({
+      ...res,
+      ...([PARAMS_MAP_REVERSE[key] || key] && queryParams[key] ? { [PARAMS_MAP_REVERSE[key] || key]: queryParams[key] } : {}),
+    }), {});
+
+    const type = Object.keys(selectors).length > 0 ? 'multiple' : DEFAULT_TYPE;
+    const params = {
+      url,
+      scope,
+      limit,
+      selector: selector || DEFAULT_PARAMS.selector,
+      // transform selectors from { key: 'value' } to [{ key: 'key', value: 'value' }]
+      selectors: (Object.keys(selectors).length > 0 ? Object.keys(selectors).reduce((res, key) => [
+        ...res, {
+          key,
+          value: selectors[key],
+        },
+      ], []) : DEFAULT_PARAMS.selectors).concat({ ...NEW_SELECTOR }),
+    };
 
     this.state = {
       type,
@@ -141,10 +167,7 @@ class ScraperBuilder extends Component {
       ...rest,
       selectors: [
         ...selectors,
-        {
-          key: '',
-          value: '',
-        }
+        { ...NEW_SELECTOR },
       ],
     } : {
       ...rest,
@@ -191,10 +214,18 @@ class ScraperBuilder extends Component {
   }
 
   changeURL() {
-    const { type, params } = this.state;
+    const { type, params: { url, selector, scope, selectors, limit } } = this.state;
     const queryString = qs.stringify({
-      type,
-      params
+      's-url': url,
+      's-scope': scope,
+      's-limit': limit,
+      // transform [{ key: 'key', value: 'value' }] to { key: 'value' }
+      ...(type === 'single' ? {
+        's-selector': selector,
+      } : selectors.reduce((res, { key, value }) => ({
+        ...res,
+        ...(key && value ? { [key]: value } : {}),
+      }), {})),
     }, { addQueryPrefix: true });
 
     window.history.pushState('', '', `${window.location.origin}${queryString}`);
@@ -228,7 +259,7 @@ class ScraperBuilder extends Component {
               </tbody>
             </Table>
           </FormGroup>
-    
+
           {this.state.type === 'single' ? (
             <div className="single-selector">
               <FormGroup>
@@ -316,7 +347,7 @@ class ScraperBuilder extends Component {
             <CopyToClipboardButton className="btn-copy-to-cb float-right" value={this.state.request} />
             <code className="d-block">{this.state.request}</code>
           </FormGroup>
-    
+
           <Button color="primary" type="submit" block busy={this.state.inProgress} busyText="Requesting...">Test</Button>
         </Form>
 
