@@ -98,24 +98,24 @@ class ScraperBuilder extends Component {
   constructor(props) {
     super(props);
 
+    // extract data from query string
     const queryParams = qs.parse(window.location.search, { ignoreQueryPrefix: true });
-    const { url = DEFAULT_PARAMS.url, scope = DEFAULT_PARAMS.scope, limit = DEFAULT_PARAMS.limit, selector, ...selectors } = Object.keys(queryParams).reduce((res, key) => ({
-      ...res,
-      ...([PARAMS_MAP_REVERSE[key] || key] && queryParams[key] ? { [PARAMS_MAP_REVERSE[key] || key]: queryParams[key] } : {}),
-    }), {});
+    const url = queryParams[PARAMS_MAP.url];
+    const scope = queryParams[PARAMS_MAP.scope];
+    const limit = queryParams[PARAMS_MAP.limit];
+    const selector = queryParams[PARAMS_MAP.selector];
+    const selectors = Object.keys(queryParams).reduce((res, key) => PARAMS_MAP_REVERSE[key] ? res : { ...res, [key]: queryParams[key] }, {});
 
     const type = Object.keys(selectors).length > 0 ? 'multiple' : DEFAULT_TYPE;
     const params = {
-      url,
-      scope,
-      limit,
+      url: url || DEFAULT_PARAMS.url,
+      scope: scope || DEFAULT_PARAMS.scope,
+      limit: limit || DEFAULT_PARAMS.limit,
       selector: selector || DEFAULT_PARAMS.selector,
       // transform selectors from { key: 'value' } to [{ key: 'key', value: 'value' }]
       selectors: (Object.keys(selectors).length > 0 ? Object.keys(selectors).reduce((res, key) => [
-        ...res, {
-          key,
-          value: selectors[key],
-        },
+        ...res,
+        { key, value: selectors[key] },
       ], []) : DEFAULT_PARAMS.selectors).concat({ ...NEW_SELECTOR }),
     };
 
@@ -216,13 +216,11 @@ class ScraperBuilder extends Component {
   changeURL() {
     const { type, params: { url, selector, scope, selectors, limit } } = this.state;
     const queryString = qs.stringify({
-      's-url': url,
-      's-scope': scope,
-      's-limit': limit,
+      [PARAMS_MAP.url]: url,
+      [PARAMS_MAP.scope]: scope,
+      [PARAMS_MAP.limit]: limit,
       // transform [{ key: 'key', value: 'value' }] to { key: 'value' }
-      ...(type === 'single' ? {
-        's-selector': selector,
-      } : selectors.reduce((res, { key, value }) => ({
+      ...(type === 'single' ? { [PARAMS_MAP.selector]: selector } : selectors.reduce((res, { key, value }) => ({
         ...res,
         ...(key && value ? { [key]: value } : {}),
       }), {})),
